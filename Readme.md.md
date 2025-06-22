@@ -43,7 +43,7 @@ python ingest_documents.py
 
 Run the Application
 Start the FastAPI server using Uvicorn:
-uvicorn main:app --host 0.0.0.0 --port 8000
+uvicorn rag_pipeline:app --host 0.0.0.0 --port 8000
 
 The API will be accessible at http://localhost:8000.
 
