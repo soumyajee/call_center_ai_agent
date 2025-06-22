@@ -1,0 +1,128 @@
+PYTHON 3 and DOCKER Answers
+
+1. Difference between Deep Copy and Shallow Copy in Python
+- Shallow Copy: Creates a new object but copies references to nested objects. Changes to nested objects affect both original and copy.
+  Implementation: Use copy.copy() from the copy module.
+- Deep Copy: Creates a new object and recursively copies all nested objects, making the copy independent.
+  Implementation: Use copy.deepcopy() from the copy module.
+
+Example:
+import copy
+original = [[1, 2, 3], 4, 5]
+shallow = copy.copy(original)
+shallow[0][0] = 99
+print(original)  # [[99, 2, 3], 4, 5]
+print(shallow)   # [[99, 2, 3], 4, 5]
+deep = copy.deepcopy(original)
+deep[0][0] = 88
+print(original)  # [[99, 2, 3], 4, 5]
+print(deep)      # [[88, 2, 3], 4, 5]
+
+2. Decorators in Python
+- Decorators: Functions that modify another function's behavior without changing its code. Applied using @decorator syntax.
+- Custom Decorator (Timing Execution):
+import time
+from functools import wraps
+def timing_decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.4f} seconds")
+        return result
+    return wrapper
+@timing_decorator
+def slow_function(n):
+    time.sleep(n)
+    return n * 2
+result = slow_function(2)  # Output: slow_function took 2.0023 seconds
+print(result)  # 4
+3. Python's Garbage Collection (GC) and Performance
+- How It Works:
+  - Reference Counting: Each object has a count of references. When count reaches zero, the object is deallocated.
+  - Generational GC: Handles reference cycles by dividing objects into generations (0, 1, 2). Periodically checks for cycles.
+  - Use gc module for manual control (e.g., gc.collect()).
+- Performance Impact:
+  - Reference counting is fast but adds overhead.
+  - Cycle detection can cause pauses, affecting real-time apps.
+  - Mitigation: Disable GC for critical sections or tune thresholds.
+Example:
+import gc
+a = []
+b = [a]
+a.append(b)
+gc.collect()  # Breaks cycle, frees memory
+4. Fetch Data from Two APIs Simultaneously Using asyncio
+import asyncio
+import aiohttp
+import json
+async def fetch_data(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
+async def fetch_two_apis(url1, url2):
+    task1 = fetch_data(url1)
+    task2 = fetch_data(url2)
+    results = await asyncio.gather(task1, task2, return_exceptions=True)
+    return results
+async def main():
+    url1 = "https://api.publicapis.org/entries"
+    url2 = "https://jsonplaceholder.typicode.com/posts"
+    result1, result2 = await fetch_two_apis(url1, url2)
+    print("API 1 response:", json.dumps(result1, indent=2)[:100] + "...")
+    print("API 2 response:", json.dumps(result2, indent=2)[:100] + "...")
+if __name__ == "__main__":
+    asyncio.run(main())
+5. Global Interpreter Lock (GIL) and Async Programming
+- GIL: A mutex in CPython ensuring only one thread executes bytecode at a time, preventing race conditions.
+- Impact on Async:
+  - Asyncio uses a single thread with an event loop, so GIL does not block I/O-bound tasks (e.g., network requests).
+  - CPU-bound tasks face GIL contention; use multiprocessing for parallelism.
+  - Mitigation: Use asyncio for I/O-bound tasks, multiprocessing for CPU-bound.
+Example:
+import asyncio
+async def io_bound_task():
+    await asyncio.sleep(1)
+    print("Task completed")
+asyncio.run(asyncio.gather(io_bound_task(), io_bound_task()))
+6. Persisting Data in Docker Containers
+- Data Persistence: Containers are ephemeral; use volumes or bind mounts to persist data.
+- Volumes: Docker-managed storage (e.g., /var/lib/docker/volumes/). Ideal for databases.
+  Example (docker-compose.yml):
+  ```yaml
+  services:
+    app:
+      image: my-app
+      volumes:
+        - my_volume:/app/data
+  volumes:
+    my_volume:
+- Bind Mounts: Map host directory to container path. Useful for development.
+  Example:
+  ```yaml
+  services:
+    app:
+      image: my-app
+      volumes:
+        - ./host_data:/app/data
+  ```
+- Volumes are portable, bind mounts are host-dependent.
+
+7. Longest Consecutive Elements Sequence
+def longest_consecutive_sequence(nums):
+    if not nums:
+        return 0
+    num_set = set(nums)
+    longest = 0
+    for num in num_set:
+        if num - 1 not in num_set:
+            current = num
+            current_streak = 1
+            while current + 1 in num_set:
+                current += 1
+                current_streak += 1
+            longest = max(longest, current_streak)
+    return longest
+nums = [100, 4, 200, 1, 3, 2]
+print(longest_consecutive_sequence(nums))  # Output: 4
